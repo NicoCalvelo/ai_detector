@@ -3,7 +3,7 @@ import cors from 'cors';
 import * as cheerio from 'cheerio';
 
 const app = express();
-const PORT = 3000;
+const PORT = 5000;
 
 // Autorise les requêtes provenant d'autres domaines (ton futur front-end)
 app.use(cors()); 
