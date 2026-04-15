@@ -14,3 +14,10 @@ export const ExtractText = async (url) => {
     throw error;
   }
 };
+
+export const DetectText = async (text) => {
+  const response = await axios.post("http://localhost:5000/api/detect", {
+    text,
+  });
+  return response.data; // array of { service, success, data, error }
+};

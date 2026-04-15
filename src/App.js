@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./App.css";
 import { FileText, Link as LinkIcon, Sparkles, ArrowRight } from "lucide-react";
-import { ExtractText } from "./services/AnalyzeText";
+import { ExtractText, DetectText } from "./services/AnalyzeText";
 
 const SAMPLE_TEXTS = [
   {
@@ -41,9 +41,23 @@ const MAX_CHARACTERS = 10000;
 function App() {
   const [text, setText] = useState("");
   const [selectedTextId, setSelectedTextId] = useState(null);
+  const [results, setResults] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState(null);
 
-  const handleAnalyze = () => {
-    console.log("CTA analyser cliqué");
+  const handleAnalyze = async () => {
+    if (!text.trim()) return;
+    setIsLoading(true);
+    setResults(null);
+    setAnalyzeError(null);
+    try {
+      const data = await DetectText(text);
+      setResults(data);
+    } catch (err) {
+      setAnalyzeError(err.response?.data?.erreur || err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSelectText = async (item) => {
@@ -71,8 +85,8 @@ function App() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.7fr_0.85fr]">
-          <section className="rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-xl shadow-slate-200/60 backdrop-blur md:p-7">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <section className="rounded-[28px] col-span-2 border border-white/70 bg-white/80 p-5 shadow-xl shadow-slate-200/60 backdrop-blur md:p-7">
             <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 md:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
@@ -102,13 +116,28 @@ function App() {
                 <button
                   type="button"
                   onClick={handleAnalyze}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-300 transition duration-200 hover:-translate-y-0.5 hover:bg-slate-800"
+                  disabled={isLoading || !text.trim()}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-300 transition duration-200 hover:-translate-y-0.5 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                 >
-                  Analyser le texte
+                  {isLoading ? "Analyse en cours..." : "Analyser le texte"}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
+
+            {analyzeError && (
+              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+                <strong>Erreur :</strong> {analyzeError}
+              </div>
+            )}
+
+            {results && (
+              <div className="mt-8 grid grid-cols-1 gap-5">
+                {results.map((result) => (
+                  <ServiceCard key={result.service} result={result} />
+                ))}
+              </div>
+            )}
           </section>
 
           <aside className="rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-xl shadow-slate-200/60 backdrop-blur md:p-6">
@@ -186,6 +215,137 @@ function App() {
           </aside>
         </div>
       </div>
+    </div>
+  );
+}
+
+const VERDICT_STYLES = {
+  HUMAIN: {
+    bg: "bg-green-100",
+    text: "text-green-700",
+    border: "border-green-200",
+  },
+  IA: { bg: "bg-red-100", text: "text-red-700", border: "border-red-200" },
+  HYBRIDE: {
+    bg: "bg-yellow-100",
+    text: "text-yellow-700",
+    border: "border-yellow-200",
+  },
+  INDETERMINABLE: {
+    bg: "bg-slate-100",
+    text: "text-slate-600",
+    border: "border-slate-200",
+  },
+};
+
+const SERVICE_LABELS = {
+  huggingface: "HuggingFace",
+  openai: "OpenAI GPT-4o",
+  sapling: "Sapling",
+};
+
+function ServiceCard({ result }) {
+  const { service, success, data, error } = result;
+  const label = SERVICE_LABELS[service] ?? service;
+
+  const isRateLimit =
+    error?.includes("429") || error?.toLowerCase().includes("rate limit");
+
+  return (
+    <div className="rounded-[24px] border border-gray-300 p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-base font-semibold text-slate-900">{label}</h3>
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            success
+              ? "bg-green-100 text-green-700"
+              : isRateLimit
+                ? "bg-orange-100 text-orange-700"
+                : "bg-red-100 text-red-700"
+          }`}
+        >
+          {success ? "OK" : isRateLimit ? "Rate limit" : "Erreur"}
+        </span>
+      </div>
+
+      {success && data ? (
+        <>
+          {data.verdict &&
+            (() => {
+              const style =
+                VERDICT_STYLES[data.verdict] ?? VERDICT_STYLES.INDETERMINABLE;
+              return (
+                <div
+                  className={`mb-4 rounded-xl border px-4 py-3 ${style.bg} ${style.border}`}
+                >
+                  <p className={`text-xl font-bold ${style.text}`}>
+                    {data.verdict}
+                  </p>
+                  {typeof data.confidence === "number" && (
+                    <>
+                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/60">
+                        <div
+                          className={`h-2 rounded-full ${style.text.replace("text", "bg")}`}
+                          style={{ width: `${data.confidence}%` }}
+                        />
+                      </div>
+                      <p className={`mt-1 text-xs font-medium ${style.text}`}>
+                        {data.confidence}% de confiance
+                      </p>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
+          {data.indices?.length > 0 && (
+            <ul className="space-y-1.5">
+              {data.indices.map((idx, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-slate-600"
+                >
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400" />
+                  {idx}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {data.label && (
+            <p className="text-sm text-slate-700">
+              <span className="font-medium">Label :</span> {data.label}
+            </p>
+          )}
+          {typeof data.score === "number" && (
+            <>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-2 rounded-full bg-violet-500"
+                  style={{ width: `${Math.round(data.score * 100)}%` }}
+                />
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                {Math.round(data.score * 100)}% de confiance
+              </p>
+            </>
+          )}
+
+          {data.limite && (
+            <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs italic text-slate-500">
+              {data.limite}
+            </p>
+          )}
+        </>
+      ) : (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+          {isRateLimit ? (
+            <p>Quota atteint. Réessaie dans quelques instants.</p>
+          ) : (
+            <p className="break-words">{error ?? "Résultat indisponible."}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
