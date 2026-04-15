@@ -1,6 +1,10 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import * as cheerio from 'cheerio';
+import { detectHuggingFace } from './services/huggingface.js';
+import { detectOpenAI } from './services/openai.js';
+import { detectSapling } from './services/sapling.js';
 
 const app = express();
 const PORT = 5000;
@@ -55,6 +59,41 @@ app.post('/api/extract', async (req, res) => {
             erreur: error.message
         });
     }
+});
+
+app.post('/api/detect', async (req, res) => {
+    const { text } = req.body;
+
+    if (!text) {
+        return res.status(400).json({ erreur: "Veuillez fournir un champ 'text' dans le corps de la requête." });
+    }
+
+    const [huggingfaceResult, openaiResult, saplingResult] = await Promise.allSettled([
+        detectHuggingFace(text),
+        detectOpenAI(text),
+        detectSapling(text),
+    ]);
+
+    res.json([
+        {
+            service: 'huggingface',
+            success: huggingfaceResult.status === 'fulfilled',
+            data: huggingfaceResult.status === 'fulfilled' ? huggingfaceResult.value : null,
+            error: huggingfaceResult.status === 'rejected' ? huggingfaceResult.reason.message : null,
+        },
+        {
+            service: 'openai',
+            success: openaiResult.status === 'fulfilled',
+            data: openaiResult.status === 'fulfilled' ? openaiResult.value : null,
+            error: openaiResult.status === 'rejected' ? openaiResult.reason.message : null,
+        },
+        {
+            service: 'sapling',
+            success: saplingResult.status === 'fulfilled',
+            data: saplingResult.status === 'fulfilled' ? saplingResult.value : null,
+            error: saplingResult.status === 'rejected' ? saplingResult.reason.message : null,
+        },
+    ]);
 });
 
 // Gestionnaire d'erreurs global (ex: JSON malformé)

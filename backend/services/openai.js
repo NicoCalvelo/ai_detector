@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 
-const OPENAI_API_KEY = 'VOTRE_OPENAI_API_KEY';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // Assurez-vous de définir cette variable d'environnement
 
 const client = new OpenAI({ apiKey: OPENAI_API_KEY });
 

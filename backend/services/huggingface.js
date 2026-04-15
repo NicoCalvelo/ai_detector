@@ -1,4 +1,4 @@
-const HF_API_KEY = 'VOTRE_HF_API_KEY';
+const HF_API_KEY = process.env.HF_API_KEY; // Assurez-vous de définir cette variable d'environnement
 
 const MODELS = {
     roberta: 'https://router.huggingface.co/hf-inference/models/roberta-base-openai-detector/v1',
