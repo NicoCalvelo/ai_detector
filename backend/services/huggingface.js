@@ -71,10 +71,16 @@ async function detectHuggingFace(text, model = "roberta") {
       totals[label] = (totals[label] ?? 0) + score;
     }
   }
-  return Object.entries(totals).map(([label, total]) => ({
+  const averaged = Object.entries(totals).map(([label, total]) => ({
     label,
     score: total / results.length,
   }));
+
+  const top = averaged.sort((a, b) => b.score - a.score)[0];
+  const verdict = top.label.toLowerCase() === "real" ? "HUMAIN" : "IA";
+  const confidence = Math.round(top.score * 100);
+
+  return { verdict, confidence, indices: [] };
 }
 
 export { detectHuggingFace };
