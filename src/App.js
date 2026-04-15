@@ -34,6 +34,26 @@ const SAMPLE_TEXTS = [
     title: "Résumé de réunion — projet tech",
     url: "https://pandasoft.contact/articles/t06-reunion-site-interne",
   },
+  {
+    id: 7,
+    title: "Texte académique — biodiversité et niveaux d'organisation du vivant",
+    url: "https://pandasoft.contact/articles/t07-academique-biodiversite",
+    },
+    {
+    id: 8,
+    title: "Avis client — hôtel (registre familier, expressions populaires)",
+    url: "https://pandasoft.contact/articles/t08-avis-hotel-lyon",
+    },
+    {
+    id: 9,
+    title: "Tribune — réforme de l'éducation (argumentaire structuré)",
+    url: "https://pandasoft.contact/articles/t09-tribune-education-ia",
+    },
+    {
+    id: 10,
+    title: "Chronique humoristique — vie quotidienne (ironie, rythme ternaire)",
+    url: "https://pandasoft.contact/articles/t10-chronique-reunions-zoom",
+    },
 ];
 
 const MAX_CHARACTERS = 10000;
@@ -44,6 +64,9 @@ function App() {
   const [results, setResults] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [analyzeError, setAnalyzeError] = useState(null);
+  const [manualUrl, setManualUrl] = useState("");
+  const [urlError, setUrlError] = useState(null);
+  const [urlLoading, setUrlLoading] = useState(false);
 
   const handleAnalyze = async () => {
     if (!text.trim()) return;
@@ -64,6 +87,21 @@ function App() {
     const response = await ExtractText(item.url);
     console.log("RESPONSE", response);
     setText(response);
+  };
+
+  const handleManualUrl = async () => {
+    if (!manualUrl.trim()) return;
+    setUrlError(null);
+    setUrlLoading(true);
+    try {
+      const response = await ExtractText(manualUrl.trim());
+      setText(response);
+      setSelectedTextId(null);
+    } catch (err) {
+      setUrlError(err.message ?? "Impossible de charger l'URL.");
+    } finally {
+      setUrlLoading(false);
+    }
   };
 
   return (
@@ -150,7 +188,32 @@ function App() {
                 zone principale.
               </p>
             </div>
-
+            <div className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="mb-2 text-sm font-medium text-slate-700">
+                Charger depuis une URL
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={manualUrl}
+                  onChange={(e) => setManualUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleManualUrl()}
+                  placeholder="https://..."
+                  className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                />
+                <button
+                  type="button"
+                  onClick={handleManualUrl}
+                  disabled={urlLoading || !manualUrl.trim()}
+                  className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {urlLoading ? "..." : "OK"}
+                </button>
+              </div>
+              {urlError && (
+                <p className="mt-2 text-xs text-red-600">{urlError}</p>
+              )}
+            </div>
             <div className="space-y-3">
               {SAMPLE_TEXTS.map((item) => {
                 const isActive = selectedTextId === item.id;
