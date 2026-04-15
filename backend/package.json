@@ -10,7 +10,8 @@
   "dependencies": {
     "cheerio": "^1.2.0",
     "cors": "^2.8.6",
-    "express": "^4.22.1"
+    "express": "^4.22.1",
+    "openai": "^6.34.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

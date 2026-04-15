@@ -57,6 +57,14 @@ app.post('/api/extract', async (req, res) => {
     }
 });
 
+// Gestionnaire d'erreurs global (ex: JSON malformé)
+app.use((err, req, res, next) => {
+    if (err.type === 'entity.parse.failed') {
+        return res.status(400).json({ erreur: "Corps de la requête invalide : JSON malformé." });
+    }
+    next(err);
+});
+
 // Démarrage du serveur
 app.listen(PORT, () => {
     console.log(`🚀 Serveur backend démarré sur http://localhost:${PORT}`);
