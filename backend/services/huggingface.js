@@ -1,8 +1,8 @@
 const HF_API_KEY = process.env.HF_API_KEY; // Assurez-vous de définir cette variable d'environnement
 
 const MODELS = {
-    roberta: 'https://router.huggingface.co/hf-inference/models/roberta-base-openai-detector/v1',
-    chatgpt: 'https://router.huggingface.co/hf-inference/models/Hello-SimpleAI/chatgpt-detector-roberta/v1',
+    roberta: 'https://api-inference.huggingface.co/models/roberta-base-openai-detector',
+    chatgpt: 'https://api-inference.huggingface.co/models/Hello-SimpleAI/chatgpt-detector-roberta',
 };
 
 /**
@@ -13,7 +13,7 @@ const MODELS = {
  *   Exemple : [{ label: 'FAKE', score: 0.91 }, { label: 'REAL', score: 0.09 }]
  *   FAKE = généré par IA, REAL = humain
  */
-async function detectHuggingFace(text, model = 'roberta') {
+async function detectHuggingFace(text, model = 'chatgpt') {
     const endpoint = MODELS[model];
     if (!endpoint) throw new Error(`Modèle inconnu : ${model}. Utilisez 'roberta' ou 'chatgpt'.`);
 
