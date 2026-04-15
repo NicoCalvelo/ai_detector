@@ -105,15 +105,15 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-200 px-4 py-8 md:px-8 md:py-10">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-slate-50 to-slate-300 px-4 py-8 md:px-8 md:py-10">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 shadow-sm">
             <Sparkles className="h-4 w-4" />
-            Détection de texte
+            Détection de texte d'IA gratuite
           </div>
 
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
+          <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-purple-900 md:text-5xl">
             Analyse visuelle de texte
           </h1>
 
